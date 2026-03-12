@@ -7,7 +7,7 @@ import {
 } from "@/types/note";
 
 const CURRENT_VERSION = 2;
-const DEFAULT_NOTES_API_BASE_URL = "http://localhost:8787";
+const DEFAULT_DEV_NOTES_API_BASE_URL = "http://localhost:8787";
 const LOCAL_CACHE_PREFIX = "web3noteapp.state.local";
 const SESSION_CACHE_PREFIX = "web3noteapp.state.session";
 
@@ -53,7 +53,28 @@ export function cacheState(ownerId: string, state: AppState): void {
 }
 
 function getNotesApiBaseUrl(): string {
-  return import.meta.env.VITE_NOTES_API_BASE_URL || DEFAULT_NOTES_API_BASE_URL;
+  const envBaseUrl = import.meta.env.VITE_NOTES_API_BASE_URL;
+  if (envBaseUrl && envBaseUrl.trim().length > 0) {
+    return envBaseUrl;
+  }
+
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    const isLocalHost = host === "localhost" || host === "127.0.0.1";
+    if (isLocalHost) {
+      return DEFAULT_DEV_NOTES_API_BASE_URL;
+    }
+  }
+
+  return "";
+}
+
+function notesApiUrl(path: string): string {
+  const apiBaseUrl = getNotesApiBaseUrl().replace(/\/$/, "");
+  if (!apiBaseUrl) {
+    return path;
+  }
+  return `${apiBaseUrl}${path}`;
 }
 
 export function initStorage(): AppState {
@@ -78,9 +99,8 @@ export function getState(): AppState {
 }
 
 export async function loadState(ownerId: string): Promise<AppState> {
-  const apiBaseUrl = getNotesApiBaseUrl();
   const response = await fetch(
-    `${apiBaseUrl.replace(/\/$/, "")}/api/state/${encodeURIComponent(ownerId)}`,
+    notesApiUrl(`/api/state/${encodeURIComponent(ownerId)}`),
   );
 
   if (response.status === 404) {
@@ -110,9 +130,8 @@ export async function saveState(
   state: AppState,
 ): Promise<void> {
   cacheState(ownerId, state);
-  const apiBaseUrl = getNotesApiBaseUrl();
   const response = await fetch(
-    `${apiBaseUrl.replace(/\/$/, "")}/api/state/${encodeURIComponent(ownerId)}`,
+    notesApiUrl(`/api/state/${encodeURIComponent(ownerId)}`),
     {
       method: "PUT",
       headers: {
