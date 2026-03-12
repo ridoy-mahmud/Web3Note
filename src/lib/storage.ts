@@ -5,11 +5,10 @@ import {
   NoteImage,
   CodeBlock,
 } from "@/types/note";
+import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 const CURRENT_VERSION = 2;
-const DEFAULT_DEV_NOTES_API_BASE_URL = "http://localhost:8787";
-const LOCAL_CACHE_PREFIX = "web3noteapp.state.local";
-const SESSION_CACHE_PREFIX = "web3noteapp.state.session";
 
 function generateId(): string {
   return (
@@ -20,61 +19,6 @@ function generateId(): string {
 
 function defaultState(): AppState {
   return { version: CURRENT_VERSION, notes: [] };
-}
-
-function localCacheKey(ownerId: string): string {
-  return `${LOCAL_CACHE_PREFIX}.${ownerId}`;
-}
-
-function sessionCacheKey(ownerId: string): string {
-  return `${SESSION_CACHE_PREFIX}.${ownerId}`;
-}
-
-function readCachedStateByKey(key: string): AppState | null {
-  try {
-    const raw = localStorage.getItem(key) ?? sessionStorage.getItem(key);
-    if (!raw) return null;
-    return migrateIfNeeded(JSON.parse(raw) as AppState);
-  } catch {
-    return null;
-  }
-}
-
-export function getCachedState(ownerId: string): AppState | null {
-  const fromSession = readCachedStateByKey(sessionCacheKey(ownerId));
-  if (fromSession) return fromSession;
-  return readCachedStateByKey(localCacheKey(ownerId));
-}
-
-export function cacheState(ownerId: string, state: AppState): void {
-  const data = JSON.stringify(migrateIfNeeded(state));
-  localStorage.setItem(localCacheKey(ownerId), data);
-  sessionStorage.setItem(sessionCacheKey(ownerId), data);
-}
-
-function getNotesApiBaseUrl(): string {
-  const envBaseUrl = import.meta.env.VITE_NOTES_API_BASE_URL;
-  if (envBaseUrl && envBaseUrl.trim().length > 0) {
-    return envBaseUrl;
-  }
-
-  if (typeof window !== "undefined") {
-    const host = window.location.hostname;
-    const isLocalHost = host === "localhost" || host === "127.0.0.1";
-    if (isLocalHost) {
-      return DEFAULT_DEV_NOTES_API_BASE_URL;
-    }
-  }
-
-  return "";
-}
-
-function notesApiUrl(path: string): string {
-  const apiBaseUrl = getNotesApiBaseUrl().replace(/\/$/, "");
-  if (!apiBaseUrl) {
-    return path;
-  }
-  return `${apiBaseUrl}${path}`;
 }
 
 export function initStorage(): AppState {
@@ -99,50 +43,39 @@ export function getState(): AppState {
 }
 
 export async function loadState(ownerId: string): Promise<AppState> {
-  const response = await fetch(
-    notesApiUrl(`/api/state/${encodeURIComponent(ownerId)}`),
-  );
+  const { data, error } = await supabase
+    .from("user_states")
+    .select("state")
+    .eq("owner_id", ownerId)
+    .maybeSingle();
 
-  if (response.status === 404) {
-    const fallback = defaultState();
-    cacheState(ownerId, fallback);
-    return fallback;
+  if (error) {
+    throw new Error(`Failed to load state (${error.message})`);
   }
 
-  if (!response.ok) {
-    throw new Error(`Failed to load state (${response.status})`);
+  if (!data?.state || typeof data.state !== "object") {
+    return defaultState();
   }
 
-  const data = (await response.json()) as { state?: AppState };
-  if (!data.state) {
-    const fallback = defaultState();
-    cacheState(ownerId, fallback);
-    return fallback;
-  }
-
-  const migrated = migrateIfNeeded(data.state);
-  cacheState(ownerId, migrated);
-  return migrated;
+  return migrateIfNeeded(data.state as unknown as AppState);
 }
 
 export async function saveState(
   ownerId: string,
   state: AppState,
 ): Promise<void> {
-  cacheState(ownerId, state);
-  const response = await fetch(
-    notesApiUrl(`/api/state/${encodeURIComponent(ownerId)}`),
+  const nextState = migrateIfNeeded(state);
+  const { error } = await supabase.from("user_states").upsert(
     {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ state }),
+      owner_id: ownerId,
+      state: nextState as unknown as Json,
+      updated_at: new Date().toISOString(),
     },
+    { onConflict: "owner_id" },
   );
 
-  if (!response.ok) {
-    throw new Error(`Failed to save state (${response.status})`);
+  if (error) {
+    throw new Error(`Failed to save state (${error.message})`);
   }
 }
 

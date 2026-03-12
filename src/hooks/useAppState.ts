@@ -9,8 +9,6 @@ import {
   reorderNotes,
   saveState,
   loadState,
-  getCachedState,
-  cacheState,
 } from "@/lib/storage";
 import {
   isDueToday,
@@ -23,7 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export function useAppState() {
   const { user } = useAuth();
   const [state, setState] = useState<AppState>(initStorage);
-  const [canSyncRemote, setCanSyncRemote] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const [filter, setFilter] = useState<FilterType>("all");
   const [sort, setSort] = useState<SortType>("newest");
   const [search, setSearch] = useState("");
@@ -36,24 +34,20 @@ export function useAppState() {
 
   useEffect(() => {
     let mounted = true;
-    setCanSyncRemote(false);
-
-    const cached = getCachedState(ownerId);
-    if (cached) {
-      setState(cached);
-    } else {
-      setState(initStorage());
-    }
+    setIsHydrated(false);
+    setState(initStorage());
 
     loadState(ownerId)
       .then((remoteState) => {
         if (!mounted) return;
         setState(remoteState);
-        setCanSyncRemote(true);
       })
       .catch(() => {
         if (!mounted) return;
-        setCanSyncRemote(false);
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setIsHydrated(true);
       });
 
     return () => {
@@ -62,12 +56,11 @@ export function useAppState() {
   }, [ownerId]);
 
   useEffect(() => {
-    cacheState(ownerId, state);
-    if (!canSyncRemote) return;
+    if (!isHydrated) return;
     saveState(ownerId, state).catch(() => {
       // Keep UI functional even if remote persistence fails.
     });
-  }, [ownerId, state, canSyncRemote]);
+  }, [ownerId, state, isHydrated]);
 
   // Schedule notifications for notes with reminders
   useEffect(() => {

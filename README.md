@@ -60,39 +60,33 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-## MongoDB Atlas setup (serverless notes storage)
+## Supabase-only setup (notes + images) with Firebase auth
 
-Notes are persisted in MongoDB Atlas through a local Node API server (`server/index.js`) that uses the MongoDB URI.
+This app uses Firebase for authentication and Supabase for data and image storage.
 
-1. Create a MongoDB Atlas project and cluster.
-2. In Atlas, open Network Access and allow your IP (or `0.0.0.0/0` for temporary testing).
-3. In Atlas, create a Database User with read/write access to your app database.
-4. Copy `.env.example` to `.env`.
-5. Set these values in `.env`:
+1. Copy `.env.example` to `.env`.
+2. Set these values in `.env`:
 
-- `VITE_NOTES_API_BASE_URL` (default `http://localhost:8787`)
-- `MONGODB_URI`
-- `MONGODB_URI_DIRECT` (optional fallback if SRV DNS fails)
-- `MONGODB_DATABASE` (for example `aether_notes`)
-- `MONGODB_NOTES_COLLECTION` (for example `user_states`)
-- `NOTES_API_PORT` (default `8787`)
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
+- `VITE_FIREBASE_GOOGLE_CLIENT_ID`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
 
-1. Start backend API in one terminal: `npm run dev:api`
-2. Start frontend in another terminal: `npm run dev`
+3. Apply Supabase migrations so `user_states` and storage policies exist:
 
-If you see `querySrv ECONNREFUSED`, your DNS is likely blocking SRV lookup for `mongodb+srv`. In Atlas Drivers for Node.js, copy the standard (non-SRV) connection string and set it as `MONGODB_URI_DIRECT`, then restart the API server.
+```sh
+supabase db push
+```
 
-The app stores one document per user in `user_states`:
+4. Start the app:
 
-```json
-{
-  "ownerId": "<auth-user-id>",
-  "state": {
-    "version": 2,
-    "notes": []
-  },
-  "updatedAt": "2026-03-12T00:00:00.000Z"
-}
+```sh
+npm run dev
 ```
 
 ## How can I deploy this project?
