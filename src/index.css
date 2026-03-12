@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 228 38% 8%;
+    --foreground: 210 40% 96%;
+    --card: 220 14% 96%;
+    --card-opacity: 0.04;
+    --card-foreground: 210 40% 96%;
+    --popover: 228 38% 12%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 128 100% 58%;
+    --primary-foreground: 228 38% 8%;
+    --secondary: 210 40% 96%;
+    --secondary-opacity: 0.1;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 210 40% 96%;
+    --muted-opacity: 0.05;
+    --muted-foreground: 210 40% 80%;
+    --accent: 261 100% 65%;
+    --accent-foreground: 210 40% 96%;
+    --accent-gradient-stop-2: 187 100% 50%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 210 40% 96%;
+    --border-opacity: 0.08;
+    --input: 210 40% 96%;
+    --input-opacity: 0.08;
+    --ring: 128 100% 58%;
+    --radius: 0.75rem;
+    --sidebar-background: 228 38% 10%;
+    --sidebar-foreground: 210 40% 96%;
+    --sidebar-primary: 128 100% 58%;
+    --sidebar-primary-foreground: 228 38% 8%;
+    --sidebar-accent: 261 100% 65%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 210 40% 96%;
+    --sidebar-ring: 128 100% 58%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 16px;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Poppins', sans-serif;
+    font-feature-settings: 'tnum' on, 'ss01' on;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-bold tracking-tight;
+    font-family: 'Poppins', sans-serif;
+    text-wrap: balance;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    text-wrap: pretty;
+    line-height: 1.7;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    background: hsla(var(--card) / var(--card-opacity));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsla(var(--border) / var(--border-opacity));
+    box-shadow: 
+      0 4px 6px -1px rgba(0,0,0,0.1),
+      0 2px 4px -2px rgba(0,0,0,0.1),
+      0 0 0 1px hsla(0, 0%, 100%, 0.06) inset;
+  }
+
+  .neon-glow {
+    box-shadow: 0 0 20px hsla(var(--primary) / 0.3),
+                0 0 40px hsla(var(--primary) / 0.1);
+  }
+
+  .neon-text {
+    text-shadow: 0 0 10px hsla(var(--primary) / 0.5),
+                 0 0 20px hsla(var(--primary) / 0.3);
+  }
+}
+
+@layer utilities {
+  .hover-lift {
+    @apply transition-all duration-200;
+  }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+  }
+}
