@@ -1,11 +1,19 @@
-import { Note, ChecklistItem, CodeBlock } from '@/types/note';
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, FileText, ListChecks, Calendar, Trash2, Code, Plus } from 'lucide-react';
-import ChecklistEditor from './ChecklistEditor';
-import ImageAttachments from './ImageAttachments';
-import CodeBlockDisplay from './CodeBlockDisplay';
-import { createChecklistItem } from '@/lib/storage';
+import { Note, ChecklistItem, CodeBlock } from "@/types/note";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  X,
+  FileText,
+  ListChecks,
+  Calendar,
+  Trash2,
+  Code,
+  Plus,
+} from "lucide-react";
+import ChecklistEditor from "./ChecklistEditor";
+import ImageAttachments from "./ImageAttachments";
+import CodeBlockDisplay from "./CodeBlockDisplay";
+import { createChecklistItem } from "@/lib/storage";
 
 interface ModalProps {
   note: Note | null;
@@ -15,17 +23,17 @@ interface ModalProps {
 }
 
 const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [type, setType] = useState<'note' | 'checklist'>('note');
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [type, setType] = useState<"note" | "checklist">("note");
   const [items, setItems] = useState<ChecklistItem[]>([]);
   const [images, setImages] = useState<any[]>([]);
   const [codeBlocks, setCodeBlocks] = useState<CodeBlock[]>([]);
-  const [reminderAt, setReminderAt] = useState('');
-  const [newItemText, setNewItemText] = useState('');
+  const [reminderAt, setReminderAt] = useState("");
+  const [newItemText, setNewItemText] = useState("");
   const [showCodeInput, setShowCodeInput] = useState(false);
-  const [codeLanguage, setCodeLanguage] = useState('javascript');
-  const [codeContent, setCodeContent] = useState('');
+  const [codeLanguage, setCodeLanguage] = useState("javascript");
+  const [codeContent, setCodeContent] = useState("");
 
   useEffect(() => {
     if (note) {
@@ -35,25 +43,27 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
       setItems(note.items);
       setImages(note.images || []);
       setCodeBlocks(note.codeBlocks || []);
-      setReminderAt(note.metadata.reminderAt ? note.metadata.reminderAt.slice(0, 16) : '');
+      setReminderAt(
+        note.metadata.reminderAt ? note.metadata.reminderAt.slice(0, 16) : "",
+      );
     }
   }, [note]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
   const save = () => {
     if (!note) return;
     onUpdate(note.id, {
       title,
-      content: type === 'note' ? content : '',
+      content: type === "note" ? content : "",
       type,
-      items: type === 'checklist' ? items : [],
+      items: type === "checklist" ? items : [],
       images,
       codeBlocks,
       metadata: {
@@ -67,22 +77,25 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
   const addItem = () => {
     if (!newItemText.trim()) return;
     setItems([...items, createChecklistItem(newItemText.trim())]);
-    setNewItemText('');
+    setNewItemText("");
   };
 
   const addCodeBlock = () => {
     if (!codeContent.trim()) return;
-    setCodeBlocks([...codeBlocks, {
-      id: crypto.randomUUID(),
-      language: codeLanguage,
-      code: codeContent.trim(),
-    }]);
-    setCodeContent('');
+    setCodeBlocks([
+      ...codeBlocks,
+      {
+        id: crypto.randomUUID(),
+        language: codeLanguage,
+        code: codeContent.trim(),
+      },
+    ]);
+    setCodeContent("");
     setShowCodeInput(false);
   };
 
   const removeCodeBlock = (id: string) => {
-    setCodeBlocks(codeBlocks.filter(b => b.id !== id));
+    setCodeBlocks(codeBlocks.filter((b) => b.id !== id));
   };
 
   if (!note) return null;
@@ -109,15 +122,15 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setType('note')}
-                className={`p-2 rounded-full transition-colors ${type === 'note' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary'}`}
+                onClick={() => setType("note")}
+                className={`p-2 rounded-full transition-colors ${type === "note" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}
                 aria-label="Text note"
               >
                 <FileText className="w-4 h-4" />
               </button>
               <button
-                onClick={() => setType('checklist')}
-                className={`p-2 rounded-full transition-colors ${type === 'checklist' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary'}`}
+                onClick={() => setType("checklist")}
+                className={`p-2 rounded-full transition-colors ${type === "checklist" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}
                 aria-label="Checklist"
               >
                 <ListChecks className="w-4 h-4" />
@@ -140,7 +153,7 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
             className="w-full bg-transparent text-foreground font-bold text-xl placeholder:text-muted-foreground focus:outline-none"
           />
 
-          {type === 'note' ? (
+          {type === "note" ? (
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -156,7 +169,7 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
                   type="text"
                   value={newItemText}
                   onChange={(e) => setNewItemText(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addItem()}
+                  onKeyDown={(e) => e.key === "Enter" && addItem()}
                   placeholder="Add item..."
                   className="flex-1 bg-muted text-foreground text-sm rounded-md px-3 py-2 placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                 />
@@ -171,7 +184,7 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
 
           {/* Code Blocks */}
           <div className="space-y-2">
-            {codeBlocks.map(block => (
+            {codeBlocks.map((block) => (
               <div key={block.id} className="relative group">
                 <CodeBlockDisplay block={block} />
                 <button
@@ -190,13 +203,33 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
                   <select
                     value={codeLanguage}
                     onChange={(e) => setCodeLanguage(e.target.value)}
-                    className="bg-muted text-foreground text-xs rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="note-language-select border border-border/50 bg-background text-foreground text-xs rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring"
+                    aria-label="Programming language"
                   >
-                    {['javascript', 'typescript', 'python', 'html', 'css', 'json', 'sql', 'bash', 'other'].map(l => (
-                      <option key={l} value={l}>{l}</option>
+                    {[
+                      "javascript",
+                      "typescript",
+                      "python",
+                      "html",
+                      "css",
+                      "json",
+                      "sql",
+                      "bash",
+                      "other",
+                    ].map((l) => (
+                      <option
+                        key={l}
+                        value={l}
+                        className="bg-popover text-popover-foreground"
+                      >
+                        {l}
+                      </option>
                     ))}
                   </select>
-                  <button onClick={() => setShowCodeInput(false)} className="ml-auto p-1 text-muted-foreground hover:text-foreground">
+                  <button
+                    onClick={() => setShowCodeInput(false)}
+                    className="ml-auto p-1 text-muted-foreground hover:text-foreground"
+                  >
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -237,7 +270,10 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
 
           <div className="flex items-center gap-2 pt-2 border-t border-border">
             <button
-              onClick={() => { onTrash(note.id); onClose(); }}
+              onClick={() => {
+                onTrash(note.id);
+                onClose();
+              }}
               className="p-2 rounded-full text-muted-foreground hover:text-destructive hover:bg-secondary transition-colors"
               aria-label="Delete"
             >

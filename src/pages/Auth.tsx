@@ -24,6 +24,10 @@ function getFirebaseAuthErrorMessage(error: unknown): string {
     return "This sign-in method is disabled in Firebase Console. Enable Email/Password and Google providers in Authentication -> Sign-in method.";
   }
 
+  if (error.code === "auth/unauthorized-domain") {
+    return "This domain is not authorized in Firebase. In Firebase Console go to Authentication -> Settings -> Authorized domains and add your Vercel domain (for example: web3noteapp.vercel.app).";
+  }
+
   return error.message || "Authentication failed";
 }
 
