@@ -30,9 +30,16 @@ test-results/
 .vite/
 .cache/
 .eslintcache
+*.tsbuildinfo
+.npm/
+.pnpm-store/
 
 # Vercel local project metadata
 .vercel/
+
+# Supabase local artifacts
+supabase/.temp/
+supabase/.branches/
 
 # Editor directories and files
 .vscode/*
