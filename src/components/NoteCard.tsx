@@ -8,6 +8,8 @@ import {
   Clock,
   Copy,
   Download,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { formatNoteDate } from "@/lib/date";
 import ChecklistEditor from "./ChecklistEditor";
@@ -15,7 +17,7 @@ import ImageAttachments from "./ImageAttachments";
 import CodeBlockDisplay from "./CodeBlockDisplay";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useState } from "react";
+import { useRef, useState, type SyntheticEvent } from "react";
 import DeleteConfirmDialog from "./DeleteConfirmDialog";
 
 interface NoteCardProps {
@@ -26,6 +28,9 @@ interface NoteCardProps {
   onPurge: (id: string) => void;
   onDuplicate: (id: string) => void;
   onClick: (note: Note) => void;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
 const NoteCard = ({
@@ -36,6 +41,9 @@ const NoteCard = ({
   onPurge,
   onDuplicate,
   onClick,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
 }: NoteCardProps) => {
   const {
     attributes,
@@ -57,6 +65,7 @@ const NoteCard = ({
   const [pendingAction, setPendingAction] = useState<"trash" | "purge" | null>(
     null,
   );
+  const lastActionTsRef = useRef(0);
 
   const exportAsMarkdown = () => {
     const checklistBody = note.items
@@ -76,6 +85,24 @@ const NoteCard = ({
     URL.revokeObjectURL(url);
   };
 
+  const stopPointer = (e: SyntheticEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    lastActionTsRef.current = Date.now();
+  };
+
+  const handleCardClick = () => {
+    if (Date.now() - lastActionTsRef.current < 450) {
+      return;
+    }
+
+    if (selectable && onToggleSelect) {
+      onToggleSelect(note.id);
+      return;
+    }
+    onClick(note);
+  };
+
   return (
     <motion.div
       ref={setNodeRef}
@@ -84,11 +111,30 @@ const NoteCard = ({
       {...listeners}
       whileHover={{ y: -4 }}
       transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
-      className="glass-panel rounded-xl p-5 cursor-pointer group hover:border-foreground/20 transition-all duration-200"
-      onClick={() => onClick(note)}
+      className="glass-panel relative rounded-xl p-5 cursor-pointer group hover:border-foreground/20 transition-all duration-200"
+      onClick={handleCardClick}
       role="article"
       aria-label={`Note: ${note.title || "Untitled"}`}
     >
+      {selectable && (
+        <button
+          type="button"
+          onPointerDown={stopPointer}
+          onClick={(e) => {
+            stopPointer(e);
+            onToggleSelect?.(note.id);
+          }}
+          className="absolute top-3 right-3 p-1.5 rounded-md bg-background/70 border border-border text-muted-foreground hover:text-foreground"
+          aria-label={selected ? "Unselect note" : "Select note"}
+        >
+          {selected ? (
+            <CheckSquare className="w-4 h-4 text-primary" />
+          ) : (
+            <Square className="w-4 h-4" />
+          )}
+        </button>
+      )}
+
       {note.pinned && (
         <Pin
           className="w-4 h-4 text-primary mb-2 rotate-45"
@@ -174,7 +220,8 @@ const NoteCard = ({
 
       <div
         className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-150 pt-2 border-t border-border"
-        onClick={(e) => e.stopPropagation()}
+        onPointerDown={stopPointer}
+        onClick={stopPointer}
       >
         {!note.trashed ? (
           <>
@@ -253,6 +300,7 @@ const NoteCard = ({
           pendingAction === "purge" ? "Delete Forever" : "Move to Trash"
         }
         onConfirm={() => {
+          lastActionTsRef.current = Date.now();
           if (pendingAction === "purge") {
             onPurge(note.id);
           } else {

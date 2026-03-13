@@ -1,71 +1,51 @@
-# Welcome to your Lovable project
+# Web3NoteApp
 
-## Project info
+Web3NoteApp is a modern note-taking application built with React, TypeScript, and Vite.
+It supports Firebase authentication, Supabase-backed persistence, rich notes, checklists, reminders, image attachments, and code snippets in a clean responsive interface.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Features
 
-## How can I edit this code?
+- Email/password and Google sign-in (Firebase Auth)
+- Rich note editor with:
+  - Plain notes
+  - Checklists
+  - Code blocks
+  - Image attachments
+  - Reminder date/time
+- Pin, archive, trash, restore, and permanent delete
+- Bulk selection and permanent delete in Trash
+- Duplicate notes and export note as Markdown
+- Quick-create templates (Meeting, Task List, Journal)
+- Color-accented notes and edited-time sorting
+- Responsive UI for desktop and mobile
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- React 18
+- TypeScript
+- Vite
+- Tailwind CSS
+- Framer Motion
+- Firebase Authentication
+- Supabase (Database + Storage)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### 1. Install dependencies
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+npm install
 ```
 
-**Edit a file directly in GitHub**
+### 2. Configure environment variables
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Create a local environment file from your template:
 
-**Use GitHub Codespaces**
+```sh
+cp .env.example .env
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## Supabase-only setup (notes + images) with Firebase auth
-
-This app uses Firebase for authentication and Supabase for data and image storage.
-
-1. Copy `.env.example` to `.env`.
-2. Set these values in `.env`:
+Set the following values in `.env`:
 
 - `VITE_FIREBASE_API_KEY`
 - `VITE_FIREBASE_AUTH_DOMAIN`
@@ -77,26 +57,46 @@ This app uses Firebase for authentication and Supabase for data and image storag
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY`
 
-3. Apply Supabase migrations so `user_states` and storage policies exist:
+### 3. Apply database migrations
 
 ```sh
 supabase db push
 ```
 
-4. Start the app:
+### 4. Start the development server
 
 ```sh
 npm run dev
 ```
 
-## How can I deploy this project?
+## Build
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+```sh
+npm run build
+```
 
-## Can I connect a custom domain to my Lovable project?
+## Test
 
-Yes, you can!
+```sh
+npm run test
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Deployment
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+The project is ready for Vercel deployment.
+
+```sh
+npx vercel --prod
+```
+
+## Project Structure
+
+- `src/components`: Reusable UI and feature components
+- `src/hooks`: App state and interaction hooks
+- `src/integrations/firebase`: Firebase setup
+- `src/integrations/supabase`: Supabase client and types
+- `supabase/migrations`: Database and policy migrations
+
+## License
+
+This project is private unless explicitly licensed by the repository owner.

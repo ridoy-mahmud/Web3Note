@@ -6,11 +6,13 @@ import NoteGrid from "@/components/NoteGrid";
 import Modal from "@/components/Modal";
 import { useAppState } from "@/hooks/useAppState";
 import { Note } from "@/types/note";
+import DeleteConfirmDialog from "@/components/DeleteConfirmDialog";
 
 const ThreeScene = lazy(() => import("@/components/ThreeScene"));
 
 const Index = () => {
   const {
+    state,
     filteredNotes,
     filter,
     sort,
@@ -22,6 +24,7 @@ const Index = () => {
     update,
     trash,
     purge,
+    purgeMany,
     restore,
     reorder,
     duplicate,
@@ -29,6 +32,9 @@ const Index = () => {
 
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [selectedTrashIds, setSelectedTrashIds] = useState<string[]>([]);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [suppressOpenUntil, setSuppressOpenUntil] = useState(0);
 
   // Check prefers-reduced-motion
   useEffect(() => {
@@ -38,6 +44,38 @@ const Index = () => {
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
   }, []);
+
+  useEffect(() => {
+    if (filter !== "trash" && selectedTrashIds.length > 0) {
+      setSelectedTrashIds([]);
+    }
+  }, [filter, selectedTrashIds.length]);
+
+  const safeTrash = (id: string) => {
+    setSuppressOpenUntil(Date.now() + 250);
+    setSelectedTrashIds((prev) => prev.filter((x) => x !== id));
+    trash(id);
+  };
+
+  const safePurge = (id: string) => {
+    setSuppressOpenUntil(Date.now() + 250);
+    setSelectedTrashIds((prev) => prev.filter((x) => x !== id));
+    purge(id);
+  };
+
+  const toggleTrashSelection = (id: string) => {
+    setSelectedTrashIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  };
+
+  const selectAllTrashVisible = () => {
+    setSelectedTrashIds(filteredNotes.map((n) => n.id));
+  };
+
+  const clearTrashSelection = () => {
+    setSelectedTrashIds([]);
+  };
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -60,6 +98,15 @@ const Index = () => {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  useEffect(() => {
+    if (!editingNote) return;
+
+    const current = state.notes.find((n) => n.id === editingNote.id);
+    if (!current || current.trashed) {
+      setEditingNote(null);
+    }
+  }, [editingNote, state.notes]);
+
   return (
     <div className="min-h-screen bg-background relative">
       {!reducedMotion && (
@@ -79,15 +126,49 @@ const Index = () => {
 
       <main className="w-[95%] lg:w-[80%] px-4 sm:px-6 lg:px-8 py-8 mx-auto">
         <QuickCreate onAdd={add} />
+
+        {filter === "trash" && (
+          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background/40 p-3">
+            <button
+              onClick={selectAllTrashVisible}
+              className="px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            >
+              Select all
+            </button>
+            <button
+              onClick={clearTrashSelection}
+              className="px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            >
+              Clear selection
+            </button>
+            <span className="text-xs text-muted-foreground">
+              {selectedTrashIds.length} selected
+            </span>
+            <button
+              onClick={() => setBulkDeleteOpen(true)}
+              disabled={selectedTrashIds.length === 0}
+              className="ml-auto px-3 py-1.5 rounded-md text-xs font-semibold bg-destructive/15 text-destructive hover:bg-destructive/25 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Delete selected permanently
+            </button>
+          </div>
+        )}
+
         <NoteGrid
           notes={filteredNotes}
           onUpdate={update}
-          onTrash={trash}
+          onTrash={safeTrash}
           onRestore={restore}
-          onPurge={purge}
+          onPurge={safePurge}
           onDuplicate={duplicate}
           onReorder={reorder}
-          onNoteClick={setEditingNote}
+          onNoteClick={(note) => {
+            if (Date.now() < suppressOpenUntil) return;
+            setEditingNote(note);
+          }}
+          selectable={filter === "trash"}
+          selectedIds={selectedTrashIds}
+          onToggleSelect={toggleTrashSelection}
         />
       </main>
 
@@ -95,7 +176,21 @@ const Index = () => {
         note={editingNote}
         onClose={() => setEditingNote(null)}
         onUpdate={update}
-        onTrash={trash}
+        onTrash={safeTrash}
+      />
+
+      <DeleteConfirmDialog
+        open={bulkDeleteOpen}
+        onOpenChange={setBulkDeleteOpen}
+        title="Delete selected notes forever?"
+        description="Selected notes in Trash will be permanently deleted and cannot be restored."
+        confirmLabel="Delete Selected"
+        onConfirm={() => {
+          setSuppressOpenUntil(Date.now() + 250);
+          purgeMany(selectedTrashIds);
+          setSelectedTrashIds([]);
+          setBulkDeleteOpen(false);
+        }}
       />
     </div>
   );
