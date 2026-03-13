@@ -8,6 +8,7 @@ import {
   Calendar,
   Trash2,
   Code,
+  BookOpen,
   Download,
   CheckCheck,
   Palette,
@@ -17,6 +18,7 @@ import ImageAttachments from "./ImageAttachments";
 import CodeBlockDisplay from "./CodeBlockDisplay";
 import { createChecklistItem } from "@/lib/storage";
 import DeleteConfirmDialog from "./DeleteConfirmDialog";
+import ReadingModeDialog from "./ReadingModeDialog";
 
 const NOTE_COLORS = [
   "#0f172a",
@@ -54,6 +56,7 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
     null,
   );
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [readingModeOpen, setReadingModeOpen] = useState(false);
 
   useEffect(() => {
     if (note) {
@@ -72,11 +75,21 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      if (readingModeOpen) {
+        setReadingModeOpen(false);
+        return;
+      }
+      onClose();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [onClose]);
+  }, [onClose, readingModeOpen]);
+
+  const readingModeText =
+    type === "checklist"
+      ? items.map((item) => item.text).join("\n\n")
+      : content;
 
   const save = () => {
     if (!note) return;
@@ -213,6 +226,13 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
                 />
               ))}
             </div>
+            <button
+              onClick={() => setReadingModeOpen(true)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              Reading mode
+            </button>
             <button
               onClick={exportAsMarkdown}
               className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
@@ -395,6 +415,13 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
             }
             setConfirmOpen(false);
           }}
+        />
+
+        <ReadingModeDialog
+          title={title}
+          text={readingModeText}
+          open={readingModeOpen}
+          onOpenChange={setReadingModeOpen}
         />
       </motion.div>
     </AnimatePresence>

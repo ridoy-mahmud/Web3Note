@@ -6,6 +6,7 @@ import {
   updateNote,
   deleteNote,
   purgeNote,
+  purgeNotes,
   reorderNotes,
   duplicateNote,
   saveState,
@@ -94,6 +95,10 @@ export function useAppState() {
 
   const purge = useCallback((id: string) => {
     setState((prev) => purgeNote(prev, id));
+  }, []);
+
+  const purgeMany = useCallback((ids: string[]) => {
+    setState((prev) => purgeNotes(prev, ids));
   }, []);
 
   const restore = useCallback((id: string) => {
@@ -186,6 +191,7 @@ export function useAppState() {
     update,
     trash,
     purge,
+    purgeMany,
     restore,
     reorder,
     duplicate,

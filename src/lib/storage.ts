@@ -137,6 +137,15 @@ export function purgeNote(state: AppState, id: string): AppState {
   return newState;
 }
 
+export function purgeNotes(state: AppState, ids: string[]): AppState {
+  if (ids.length === 0) return state;
+  const idSet = new Set(ids);
+  return {
+    ...state,
+    notes: state.notes.filter((n) => !idSet.has(n.id)),
+  };
+}
+
 export function reorderNotes(state: AppState, noteIds: string[]): AppState {
   const noteMap = new Map(state.notes.map((n) => [n.id, n]));
   const ordered = noteIds

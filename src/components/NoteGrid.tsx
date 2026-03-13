@@ -20,6 +20,9 @@ interface NoteGridProps {
   onDuplicate: (id: string) => void;
   onReorder: (ids: string[]) => void;
   onNoteClick: (note: Note) => void;
+  selectable?: boolean;
+  selectedIds?: string[];
+  onToggleSelect?: (id: string) => void;
 }
 
 const NoteGrid = ({
@@ -31,6 +34,9 @@ const NoteGrid = ({
   onDuplicate,
   onReorder,
   onNoteClick,
+  selectable = false,
+  selectedIds = [],
+  onToggleSelect,
 }: NoteGridProps) => {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -92,6 +98,9 @@ const NoteGrid = ({
               onPurge={onPurge}
               onDuplicate={onDuplicate}
               onClick={onNoteClick}
+              selectable={selectable}
+              selected={selectedIds.includes(note.id)}
+              onToggleSelect={onToggleSelect}
             />
           ))}
         </div>
