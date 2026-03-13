@@ -3,8 +3,6 @@ import { cn } from "@/lib/utils";
 import {
   Inbox,
   CheckCircle2,
-  CalendarDays,
-  Clock,
   Pin,
   Archive,
   Trash2,
@@ -15,6 +13,7 @@ import {
 interface FiltersBarProps {
   filter: FilterType;
   sort: SortType;
+  notesCount: number;
   onFilterChange: (f: FilterType) => void;
   onSortChange: (s: SortType) => void;
 }
@@ -27,8 +26,6 @@ const filters: {
   { key: "all", label: "All", icon: Inbox },
   { key: "active", label: "Active", icon: Star },
   { key: "completed", label: "Done", icon: CheckCircle2 },
-  { key: "today", label: "Today", icon: CalendarDays },
-  { key: "upcoming", label: "Upcoming", icon: Clock },
   { key: "pinned", label: "Pinned", icon: Pin },
   { key: "archived", label: "Archived", icon: Archive },
   { key: "trash", label: "Trash", icon: Trash2 },
@@ -37,17 +34,18 @@ const filters: {
 const sorts: { key: SortType; label: string }[] = [
   { key: "newest", label: "Newest" },
   { key: "oldest", label: "Oldest" },
-  { key: "custom", label: "Custom" },
+  { key: "custom", label: "Edited" },
 ];
 
 const FiltersBar = ({
   filter,
   sort,
+  notesCount,
   onFilterChange,
   onSortChange,
 }: FiltersBarProps) => {
   return (
-    <div className="h-14 w-[95%] lg:w-[80%] mx-auto flex items-center gap-2 px-4 sm:px-6 lg:px-8 overflow-x-auto scrollbar-hide sticky top-16 z-30 bg-background/80 backdrop-blur-sm border-b border-border">
+    <div className="h-14 w-[95%] lg:w-[80%] mx-auto flex items-center gap-2 px-3 sm:px-6 lg:px-8 overflow-x-auto scrollbar-hide sticky top-16 z-30 bg-background/80 backdrop-blur-sm border-b border-border">
       <div className="flex items-center gap-1.5 flex-shrink-0">
         {filters.map(({ key, label, icon: Icon }) => (
           <button
@@ -66,6 +64,10 @@ const FiltersBar = ({
             <span className="hidden sm:inline">{label}</span>
           </button>
         ))}
+      </div>
+
+      <div className="hidden md:flex items-center px-2.5 py-1 rounded-md bg-muted text-xs text-muted-foreground font-medium">
+        {notesCount} notes
       </div>
 
       <div className="ml-auto flex items-center gap-1.5 flex-shrink-0">

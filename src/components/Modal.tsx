@@ -8,12 +8,24 @@ import {
   Calendar,
   Trash2,
   Code,
-  Plus,
+  Download,
+  CheckCheck,
+  Palette,
 } from "lucide-react";
 import ChecklistEditor from "./ChecklistEditor";
 import ImageAttachments from "./ImageAttachments";
 import CodeBlockDisplay from "./CodeBlockDisplay";
 import { createChecklistItem } from "@/lib/storage";
+import DeleteConfirmDialog from "./DeleteConfirmDialog";
+
+const NOTE_COLORS = [
+  "#0f172a",
+  "#334155",
+  "#1e3a8a",
+  "#065f46",
+  "#7c2d12",
+  "#7f1d1d",
+];
 
 interface ModalProps {
   note: Note | null;
@@ -34,6 +46,14 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
   const [showCodeInput, setShowCodeInput] = useState(false);
   const [codeLanguage, setCodeLanguage] = useState("javascript");
   const [codeContent, setCodeContent] = useState("");
+  const [color, setColor] = useState("#0f172a");
+  const [pendingDeleteAction, setPendingDeleteAction] = useState<
+    "note" | "code"
+  >("note");
+  const [pendingCodeBlockId, setPendingCodeBlockId] = useState<string | null>(
+    null,
+  );
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (note) {
@@ -43,6 +63,7 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
       setItems(note.items);
       setImages(note.images || []);
       setCodeBlocks(note.codeBlocks || []);
+      setColor(note.color || "#0f172a");
       setReminderAt(
         note.metadata.reminderAt ? note.metadata.reminderAt.slice(0, 16) : "",
       );
@@ -66,6 +87,7 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
       items: type === "checklist" ? items : [],
       images,
       codeBlocks,
+      color,
       metadata: {
         showDateOnCard: !!reminderAt,
         reminderAt: reminderAt ? new Date(reminderAt).toISOString() : null,
@@ -95,7 +117,32 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
   };
 
   const removeCodeBlock = (id: string) => {
-    setCodeBlocks(codeBlocks.filter((b) => b.id !== id));
+    setPendingDeleteAction("code");
+    setPendingCodeBlockId(id);
+    setConfirmOpen(true);
+  };
+
+  const clearCompletedItems = () => {
+    setItems((prev) => prev.filter((item) => !item.checked));
+  };
+
+  const exportAsMarkdown = () => {
+    if (!note) return;
+    const checklistBody = items
+      .map((item) => `- [${item.checked ? "x" : " "}] ${item.text}`)
+      .join("\n");
+    const codeBody = codeBlocks
+      .map((block) => `\n\n\`\`\`${block.language}\n${block.code}\n\`\`\``)
+      .join("");
+    const body = type === "checklist" ? checklistBody : content;
+    const markdown = `# ${title || "Untitled Note"}\n\n${body}${codeBody}`;
+    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${(title || "note").replace(/\s+/g, "-").toLowerCase()}.md`;
+    anchor.click();
+    URL.revokeObjectURL(url);
   };
 
   if (!note) return null;
@@ -114,7 +161,7 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.98 }}
           transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-          className="glass-panel rounded-xl w-full max-w-lg p-6 space-y-4 max-h-[85vh] overflow-y-auto"
+          className="glass-panel rounded-xl w-full max-w-lg p-4 sm:p-6 space-y-4 max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-label="Edit note"
@@ -153,6 +200,37 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
             className="w-full bg-transparent text-foreground font-bold text-xl placeholder:text-muted-foreground focus:outline-none"
           />
 
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2 px-2 py-1 rounded-lg bg-muted/60">
+              <Palette className="w-3.5 h-3.5 text-muted-foreground" />
+              {NOTE_COLORS.map((swatch) => (
+                <button
+                  key={swatch}
+                  onClick={() => setColor(swatch)}
+                  className={`w-4 h-4 rounded-full border ${color === swatch ? "ring-2 ring-ring" : "border-border"}`}
+                  style={{ backgroundColor: swatch }}
+                  aria-label="Set note color"
+                />
+              ))}
+            </div>
+            <button
+              onClick={exportAsMarkdown}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Export .md
+            </button>
+            {type === "checklist" && items.some((item) => item.checked) && (
+              <button
+                onClick={clearCompletedItems}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                <CheckCheck className="w-3.5 h-3.5" />
+                Clear completed
+              </button>
+            )}
+          </div>
+
           {type === "note" ? (
             <textarea
               value={content}
@@ -189,7 +267,7 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
                 <CodeBlockDisplay block={block} />
                 <button
                   onClick={() => removeCodeBlock(block.id)}
-                  className="absolute top-1 right-8 p-1 rounded text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-1 right-8 p-1 rounded text-destructive opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                   aria-label="Remove code block"
                 >
                   <X className="w-3 h-3" />
@@ -271,8 +349,8 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
           <div className="flex items-center gap-2 pt-2 border-t border-border">
             <button
               onClick={() => {
-                onTrash(note.id);
-                onClose();
+                setPendingDeleteAction("note");
+                setConfirmOpen(true);
               }}
               className="p-2 rounded-full text-muted-foreground hover:text-destructive hover:bg-secondary transition-colors"
               aria-label="Delete"
@@ -287,6 +365,37 @@ const Modal = ({ note, onClose, onUpdate, onTrash }: ModalProps) => {
             </button>
           </div>
         </motion.div>
+
+        <DeleteConfirmDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title={
+            pendingDeleteAction === "note"
+              ? "Move note to trash?"
+              : "Delete code block?"
+          }
+          description={
+            pendingDeleteAction === "note"
+              ? "You can restore this note later from the Trash view."
+              : "This code block will be removed from the note."
+          }
+          confirmLabel={
+            pendingDeleteAction === "note" ? "Move to Trash" : "Delete Block"
+          }
+          onConfirm={() => {
+            if (!note) return;
+            if (pendingDeleteAction === "note") {
+              onTrash(note.id);
+              onClose();
+            } else if (pendingCodeBlockId) {
+              setCodeBlocks((prev) =>
+                prev.filter((b) => b.id !== pendingCodeBlockId),
+              );
+              setPendingCodeBlockId(null);
+            }
+            setConfirmOpen(false);
+          }}
+        />
       </motion.div>
     </AnimatePresence>
   );

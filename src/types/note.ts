@@ -24,7 +24,7 @@ export interface NoteMetadata {
 export interface Note {
   id: string;
   title: string;
-  type: 'note' | 'checklist';
+  type: "note" | "checklist";
   content: string;
   items: ChecklistItem[];
   images: NoteImage[];
@@ -43,5 +43,11 @@ export interface AppState {
   notes: Note[];
 }
 
-export type FilterType = 'all' | 'active' | 'completed' | 'today' | 'upcoming' | 'pinned' | 'archived' | 'trash';
-export type SortType = 'newest' | 'oldest' | 'custom';
+export type FilterType =
+  | "all"
+  | "active"
+  | "completed"
+  | "pinned"
+  | "archived"
+  | "trash";
+export type SortType = "newest" | "oldest" | "custom";

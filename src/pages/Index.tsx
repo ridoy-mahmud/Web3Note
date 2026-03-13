@@ -24,6 +24,7 @@ const Index = () => {
     purge,
     restore,
     reorder,
+    duplicate,
   } = useAppState();
 
   const [editingNote, setEditingNote] = useState<Note | null>(null);
@@ -71,6 +72,7 @@ const Index = () => {
       <FiltersBar
         filter={filter}
         sort={sort}
+        notesCount={filteredNotes.length}
         onFilterChange={setFilter}
         onSortChange={setSort}
       />
@@ -83,6 +85,7 @@ const Index = () => {
           onTrash={trash}
           onRestore={restore}
           onPurge={purge}
+          onDuplicate={duplicate}
           onReorder={reorder}
           onNoteClick={setEditingNote}
         />

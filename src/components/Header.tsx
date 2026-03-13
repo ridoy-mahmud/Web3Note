@@ -14,6 +14,10 @@ const Header = ({ search, onSearchChange }: HeaderProps) => {
     user?.displayName?.trim()?.charAt(0)?.toUpperCase() ||
     user?.email?.trim()?.charAt(0)?.toUpperCase() ||
     "U";
+  const userFirstName =
+    user?.displayName?.trim().split(/\s+/)[0] ||
+    user?.email?.split("@")[0] ||
+    "User";
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -33,7 +37,7 @@ const Header = ({ search, onSearchChange }: HeaderProps) => {
   }, []);
 
   return (
-    <header className="h-16 w-[95%] lg:w-[80%] mx-auto border-b border-border flex items-center justify-between px-4 sm:px-6 lg:px-8 glass-panel sticky top-0 z-40">
+    <header className="min-h-16 w-[95%] lg:w-[80%] mx-auto border-b border-border flex items-center justify-between px-3 sm:px-6 lg:px-8 py-2 glass-panel sticky top-0 z-40 gap-2">
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
           <Zap className="w-5 h-5 text-primary-foreground" />
@@ -43,7 +47,7 @@ const Header = ({ search, onSearchChange }: HeaderProps) => {
         </h1>
       </div>
 
-      <div className="relative flex-1 max-w-md mx-4">
+      <div className="relative flex-1 max-w-md mx-2 sm:mx-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           ref={inputRef}
@@ -71,6 +75,9 @@ const Header = ({ search, onSearchChange }: HeaderProps) => {
                 {userInitial}
               </div>
             )}
+            <span className="text-sm font-medium text-foreground max-w-[100px] sm:max-w-[160px] truncate">
+              {userFirstName}
+            </span>
             <button
               onClick={signOut}
               className="p-2 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
@@ -80,9 +87,6 @@ const Header = ({ search, onSearchChange }: HeaderProps) => {
             </button>
           </div>
         )}
-        <kbd className="hidden lg:inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground bg-muted rounded-md">
-          N <span className="text-[10px]">new note</span>
-        </kbd>
       </div>
     </header>
   );

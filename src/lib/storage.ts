@@ -147,6 +147,25 @@ export function reorderNotes(state: AppState, noteIds: string[]): AppState {
   return newState;
 }
 
+export function duplicateNote(state: AppState, id: string): AppState {
+  const source = state.notes.find((n) => n.id === id);
+  if (!source) return state;
+
+  const now = new Date().toISOString();
+  const duplicate: Note = {
+    ...source,
+    id: generateId(),
+    title: source.title ? `${source.title} (Copy)` : "Untitled (Copy)",
+    pinned: false,
+    archived: false,
+    trashed: false,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  return { ...state, notes: [duplicate, ...state.notes] };
+}
+
 export function createChecklistItem(text: string): ChecklistItem {
   return { id: generateId(), text, checked: false };
 }

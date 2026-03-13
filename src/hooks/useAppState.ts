@@ -7,12 +7,11 @@ import {
   deleteNote,
   purgeNote,
   reorderNotes,
+  duplicateNote,
   saveState,
   loadState,
 } from "@/lib/storage";
 import {
-  isDueToday,
-  isUpcoming,
   scheduleNotification,
   requestNotificationPermission,
 } from "@/lib/date";
@@ -105,6 +104,10 @@ export function useAppState() {
     setState((prev) => reorderNotes(prev, ids));
   }, []);
 
+  const duplicate = useCallback((id: string) => {
+    setState((prev) => duplicateNote(prev, id));
+  }, []);
+
   const filteredNotes = (() => {
     let notes = state.notes;
 
@@ -133,16 +136,6 @@ export function useAppState() {
             n.items.every((i) => i.checked),
         );
         break;
-      case "today":
-        notes = notes.filter(
-          (n) => !n.trashed && isDueToday(n.metadata.reminderAt),
-        );
-        break;
-      case "upcoming":
-        notes = notes.filter(
-          (n) => !n.trashed && isUpcoming(n.metadata.reminderAt),
-        );
-        break;
       case "pinned":
         notes = notes.filter((n) => n.pinned && !n.trashed);
         break;
@@ -167,6 +160,11 @@ export function useAppState() {
         (a, b) =>
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
       );
+    } else if (sort === "custom") {
+      notes = [...notes].sort(
+        (a, b) =>
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+      );
     }
 
     // Pinned first
@@ -190,5 +188,6 @@ export function useAppState() {
     purge,
     restore,
     reorder,
+    duplicate,
   };
 }
